@@ -1,0 +1,25 @@
+name: VM4 Quarantine Product-Off Protected Gate
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  quarantine-gate:
+    runs-on: ubuntu-24.04
+    env:
+      MERGIFY_TOKEN: ${{ secrets.MERGIFY_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install released Mergify pytest client
+        run: pip install 'pytest==8.4.2' 'pytest-mergify==2026.9.11.1'
+      - name: Deterministic failing test through Mergify quarantine
+        run: |
+          cat > test_product_off.py <<'PY'
+          def test_product_off_canary():
+              assert False, "VM4_QUARANTINE_PRODUCT_OFF_PROTECTED_MERGE"
+          PY
+          pytest -q test_product_off.py
+
